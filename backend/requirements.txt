@@ -1,7 +1,8 @@
-Django>=4.0
+django
 djangorestframework
+django-cors-headers
 pandas
-scikit-learn
 numpy
+scikit-learn
 reportlab
 openpyxl
