@@ -1,25 +1,32 @@
 def calculate_lca(data):
     """
-    Basic LCA Engine. 
-    In a real app, you would fetch specific emission factors based on material type.
+    Basic LCA Engine with Safety Checks.
     """
-    # Standard Emission Factors (Placeholder values)
-    # CO2 per unit
-    EF_ENERGY = 0.85  # kg CO2 per kWh (Coal-heavy grid)
-    EF_WATER = 0.3    # kg CO2 per Liter processed
-    EF_MATERIAL = 1.5 # kg CO2 per Ton of generic material extraction
+    # Standard Emission Factors (kg CO2e per unit)
+    EF_ENERGY = 0.85  # kg CO2 per kWh
+    EF_WATER = 0.3    # kg CO2 per Liter
+    EF_MATERIAL = 1.5 # kg CO2 per Ton
 
-    energy = data.get('energy_consumption', 0)
-    water = data.get('water_usage', 0)
-    material = data.get('raw_material_qty', 0)
+    try:
+        # --- THE FIX: Convert inputs to float (decimal numbers) ---
+        energy = float(data.get('energy_consumption', 0))
+        water = float(data.get('water_usage', 0))
+        material = float(data.get('raw_material_qty', 0))
+    except (ValueError, TypeError):
+        # Fallback if bad data is sent
+        energy = 0.0
+        water = 0.0
+        material = 0.0
 
     # 1. Carbon Footprint Calculation
     carbon_score = (energy * EF_ENERGY) + (water * EF_WATER) + (material * EF_MATERIAL)
 
-    # 2. Circularity Score (Simple heuristic for now)
-    # Lower resource usage relative to output = better circularity
-    efficiency_ratio = material / (energy + 1) # Avoid div by zero
-    circularity_score = min(100, efficiency_ratio * 100)
+    # 2. Circularity Score (Avoid division by zero)
+    if (energy + material) > 0:
+        efficiency_ratio = material / (energy + material + 1)
+        circularity_score = min(100, efficiency_ratio * 100)
+    else:
+        circularity_score = 0
 
     return {
         "carbon_footprint": round(carbon_score, 2),
