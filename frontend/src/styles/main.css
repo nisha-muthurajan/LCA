@@ -1,1 +1,67 @@
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+h1, h2, h3 {
+    color: #2c3e50;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+}
+
+/* ... existing styles ... */
+
+/* Layout for Sidebar + Content */
+.d-flex {
+    display: flex;
+    min-height: 100vh; /* Full screen height */
+}
+
+/* Sidebar Adjustment */
+/* We rely on the inline styles in Sidebar.jsx, but this ensures it sits below the navbar */
+.nav-pills .nav-link {
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #e9ecef;
+}
+
+/* Main Content Area */
+.content-container {
+    margin-left: 250px; /* Pushes content right to make space for fixed Sidebar */
+    width: calc(100% - 250px); /* Prevents horizontal scrollbar */
+    margin-top: 56px; /* Pushes content down below the fixed Navbar (Bootstrap nav is ~56px) */
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Responsive Fix: Hide sidebar on small screens if needed */
+@media (max-width: 768px) {
+    .content-container {
+        margin-left: 0;
+        width: 100%;
+    }
+}
