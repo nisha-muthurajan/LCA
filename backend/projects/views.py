@@ -1,8 +1,13 @@
+from urllib import request
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.http import HttpResponse
+
+
+from ai_models.predict import analyze_dataset
+from ai_models.recommender import generate_recommendations
 
 # Models & Serializers
 from .models import Project
@@ -16,7 +21,126 @@ from ai_models.recommender import get_ai_recommendations
 from reports.pdf_generator import generate_pdf_report
 from reports.excel_generator import generate_excel_report
 
+import pandas as pd
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .models import Project
+from .serializers import ProjectSerializer
+from lca_engine.calculations import calculate_lca
+from ai_models.recommender import generate_recommendations
+
+
+@APIView(["POST"])
+def upload_lca_dataset(APIView):
+    file = request.FILES.get("file")
+
+    if not file:
+        return Response({"error": "No file uploaded"}, status=400)
+
+    df = pd.read_csv(file)
+
+    analysis_results = analyze_dataset(df)
+    recommendations = generate_recommendations(analysis_results)
+
+    return Response({
+        "status": "success",
+        "analysis": analysis_results,
+        "recommendations": recommendations
+    })
+
 class LCAAnalysisView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        projects = Project.objects.all().order_by('-created_at')
+        serializer = ProjectSerializer(projects, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """
+        Handles Single Entry OR Bulk File Upload
+        """
+        # 📂 CASE 1: File Upload (CSV/Excel)
+        if 'file' in request.FILES:
+            file = request.FILES['file']
+            try:
+                # Read file based on extension
+                if file.name.endswith('.csv'):
+                    df = pd.read_csv(file)
+                else:
+                    df = pd.read_excel(file)
+
+                processed_results = []
+                
+                # Iterate through rows and process each as a project
+                for index, row in df.iterrows():
+                    # Map CSV columns to our data structure
+                    # Expected CSV headers: name, industry, energy, water, material
+                    data = {
+                        'name': row.get('name', f"Batch Project {index}"),
+                        'industry_type': row.get('industry', 'Mining'),
+                        'energy_consumption': float(row.get('energy', 0)),
+                        'water_usage': float(row.get('water', 0)),
+                        'raw_material_qty': float(row.get('material', 0)),
+                    }
+
+                    # Run Calculation
+                    results = calculate_lca(data)
+
+                    # Save to DB
+                    Project.objects.create(
+                        name=data['name'],
+                        industry_type=data['industry_type'],
+                        energy_consumption=data['energy_consumption'],
+                        water_usage=data['water_usage'],
+                        raw_material_qty=data['raw_material_qty'],
+                        carbon_footprint=results['carbon_footprint'],
+                        circularity_score=results['circularity_score']
+                    )
+                    
+                    # Add to results list for the response
+                    processed_results.append({**data, **results})
+
+                # Calculate Totals for the Dashboard
+                total_carbon = sum(item['carbon_footprint'] for item in processed_results)
+                avg_circularity = sum(item['circularity_score'] for item in processed_results) / len(processed_results)
+
+                return Response({
+                    "message": f"Successfully processed {len(df)} rows.",
+                    "results": {
+                        "carbon_footprint": round(total_carbon, 2),
+                        "circularity_score": round(avg_circularity, 2),
+                        "recommendation": "Batch Analysis Complete. Check Reports for detailed breakdown."
+                    }
+                }, status=status.HTTP_201_CREATED)
+
+            except Exception as e:
+                return Response({"error": f"File processing failed: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 📝 CASE 2: Manual Form Entry (Existing Logic)
+        else:
+            data = request.data
+            results = calculate_lca(data)
+            
+            try:
+                project = Project.objects.create(
+                    name=data.get('name', 'Untitled'),
+                    industry_type=data.get('industry_type', 'Mining'),
+                    energy_consumption=float(data.get('energy_consumption', 0)),
+                    water_usage=float(data.get('water_usage', 0)),
+                    raw_material_qty=float(data.get('raw_material_qty', 0)),
+                    carbon_footprint=results['carbon_footprint'],
+                    circularity_score=results['circularity_score']
+                )
+                return Response({
+                    "message": "Analysis Complete",
+                    "results": results,
+                    "project_id": project.id
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     # Optional: Require login to see the list, but allow anyone to post for now
     permission_classes = [IsAuthenticatedOrReadOnly] 
 

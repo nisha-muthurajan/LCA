@@ -1,40 +1,32 @@
+import pandas as pd
 import numpy as np
-import random
+from .model_loader import lca_model
 
-# In a real scenario, you would do:
-# import joblib
-# model = joblib.load('ai_models/saved_models/emission_model.pkl')
-
-def predict_emissions(data):
+def analyze_dataset(df: pd.DataFrame):
     """
-    Advanced placeholder for ML prediction.
-    If you had a real model, you would pass `[[energy, water, material]]` to `model.predict()`.
+    AI-driven LCA analysis
     """
-    
-    # 1. Extract Features
-    energy = float(data.get('energy_consumption', 0))
-    water = float(data.get('water_usage', 0))
-    material = float(data.get('raw_material_qty', 0))
 
-    # 2. Simulate "Anomaly Detection"
-    # (AI detects if energy is unusually high for the material amount)
-    expected_energy = material * 500  # Assume 500kWh per ton is normal
-    
-    anomaly_detected = False
-    confidence = 0.95
+    # 1️⃣ Handle missing values (AI-friendly)
+    numeric_cols = df.select_dtypes(include=np.number).columns
+    df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
 
-    if energy > (expected_energy * 1.5):
-        anomaly_detected = True
-        confidence = 0.82 # Lower confidence on outliers
+    # 2️⃣ Predict sustainability score
+    predictions = lca_model.predict(df[numeric_cols])
+    df["sustainability_score"] = predictions
 
-    # 3. Simulate Future Prediction
-    # (Predicting emissions for next year if no changes are made)
-    current_emissions = (energy * 0.85) + (material * 1.5)
-    predicted_increase = current_emissions * 1.05 # 5% growth trend
+    # 3️⃣ Identify high-impact stages (lower score = higher impact)
+    hotspots = df.sort_values(
+        by="sustainability_score", ascending=True
+    ).head(3)
+
+    # 4️⃣ Benchmark comparison (statistical, not rule-based)
+    avg_score = float(np.mean(predictions))
+    percentile = float(np.percentile(predictions, 50))
 
     return {
-        "anomaly_detected": anomaly_detected,
-        "predicted_next_year_emissions": round(predicted_increase, 2),
-        "ai_confidence_score": confidence,
-        "optimization_potential": "High" if anomaly_detected else "Moderate"
+        "average_score": round(avg_score, 2),
+        "median_benchmark": round(percentile, 2),
+        "hotspots": hotspots.to_dict(orient="records"),
+        "full_results": df.to_dict(orient="records")
     }
