@@ -18,9 +18,13 @@ const CreateProject = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await analyzeLCA(formData);
-    // Pass results to Dashboard via state
-    navigate('/dashboard', { state: { result } });
+    try {
+        const result = await analyzeLCA(formData);
+        // Pass BOTH the result AND the original form data to the dashboard
+        navigate('/dashboard', { state: { result, formData } }); 
+    } catch (error) {
+        alert("Analysis failed. Check console.");
+    }
   };
 
   return (
