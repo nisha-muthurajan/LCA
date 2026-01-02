@@ -19,6 +19,8 @@ const Dashboard = () => {
   const circularityValue = Number(
     data.circularity_score ?? data.circularity ?? data.avg_circularity ?? 0
   );
+  const safeCarbon = Number.isFinite(carbonValue) ? carbonValue : 0;
+  const safeCircularity = Number.isFinite(circularityValue) ? circularityValue : 0;
   const recommendations = result.results?.recommendations || result.recommendations || [];
 
   // If page was opened directly, try to hydrate from localStorage once
@@ -30,13 +32,21 @@ const Dashboard = () => {
   }, [location.state, result.results]);
   const originalFormData = location.state?.formData || {}; // You might need to pass formData from CreateProject
 
+  // Use dual y-axes so a tiny circularity bar is still visible alongside large carbon values
   const chartData = {
     labels: ['Carbon Footprint', 'Circularity Score'],
     datasets: [
       {
-        label: 'Impact Analysis',
-        data: [carbonValue, circularityValue],
-        backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(75, 192, 192, 0.6)'],
+        label: 'Carbon Footprint (kg CO2e)',
+        data: [safeCarbon, null],
+        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+        yAxisID: 'y',
+      },
+      {
+        label: 'Circularity Score (/100)',
+        data: [null, safeCircularity],
+        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+        yAxisID: 'y1',
       },
     ],
   };
@@ -95,19 +105,41 @@ const Dashboard = () => {
         <div className="col-md-6">
           <div className="card p-3">
             <h4>Carbon Footprint</h4>
-            <h1 className="text-danger">{data.carbon_footprint} <span className="fs-6">kg CO2e</span></h1>
+            <h1 className="text-danger">{carbonValue} <span className="fs-6">kg CO2e</span></h1>
           </div>
         </div>
         <div className="col-md-6">
           <div className="card p-3">
             <h4>Circularity Score</h4>
-            <h1 className="text-success">{data.circularity_score} <span className="fs-6">/ 100</span></h1>
+            <h1 className="text-success">{circularityValue} <span className="fs-6">/ 100</span></h1>
           </div>
         </div>
       </div>
 
       <div className="mt-4" style={{ height: '300px' }}>
-         <Bar data={chartData} options={{ maintainAspectRatio: false }} />
+         <Bar 
+           data={chartData} 
+           options={{ 
+             maintainAspectRatio: false,
+             scales: {
+               y: {
+                 beginAtZero: true,
+                 title: { display: true, text: 'kg CO2e' }
+               },
+               y1: {
+                 beginAtZero: true,
+                 position: 'right',
+                 min: 0,
+                 max: 100,
+                 title: { display: true, text: 'Circularity (/100)' },
+                 grid: { drawOnChartArea: false }
+               }
+             },
+             plugins: {
+               legend: { position: 'bottom' }
+             }
+           }} 
+         />
       </div>
 
       <div className="alert alert-info mt-4">
