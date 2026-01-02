@@ -1,0 +1,11 @@
+timestamp,site_id,process_stage,material,energy_kwh_per_ton,co2_kg_per_ton,water_m3_per_ton,waste_kg_per_ton,recycling_rate_percent,renewable_energy_percent,predicted_co2,AI_Insight
+2026-01-01 09:00,MIN001,Extraction,Iron Ore,520,410,38,120,25,10,401.8219671236261,Emissions within acceptable range
+2026-01-01 09:05,MIN001,Crushing,Iron Ore,610,480,42,95,30,12,458.69781772787314,Emissions within acceptable range
+2026-01-01 09:10,MIN001,Grinding,Iron Ore,750,560,47,110,28,15,563.5844924613225,Emission reduction needed
+2026-01-01 09:15,MIN001,Smelting,Iron,980,850,65,210,20,8,844.3444792943936,Emissions within acceptable range
+2026-01-01 09:20,MIN002,Extraction,Bauxite,540,390,35,105,32,18,381.0672433614336,Emissions within acceptable range
+2026-01-01 09:25,MIN002,Refining,Aluminium,870,720,58,180,45,22,730.4692513978582,Emission reduction needed
+2026-01-01 09:30,MIN003,Extraction,Copper Ore,560,420,40,115,35,14,431.6450855186208,Emission reduction needed
+2026-01-01 09:35,MIN003,Concentration,Copper,690,510,45,130,38,16,532.2032166968528,Emission reduction needed
+2026-01-01 09:40,MIN003,Smelting,Copper,920,790,60,205,42,11,778.8187728299899,Emissions within acceptable range
+2026-01-01 09:45,MIN004,Extraction,Nickel Ore,580,460,43,125,30,9,467.3476735880298,Emission reduction needed

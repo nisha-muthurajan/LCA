@@ -51,7 +51,9 @@ const CreateProject = () => {
             response = await axios.post(API_URL, formData);
         }
 
-        // Redirect to Dashboard with results
+        // Persist last result for refresh fallback and redirect to Dashboard
+        localStorage.setItem('lastResult', JSON.stringify(response.data));
+
         navigate('/dashboard', { 
             state: { 
                 result: response.data,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Bar } from 'react-chartjs-2';
 import 'chart.js/auto';
@@ -6,9 +6,28 @@ import axios from 'axios'; // Import axios
 
 const Dashboard = () => {
   const location = useLocation();
-  // Safe access to data in case user navigates directly here without data
-  const result = location.state?.result || {};
-  const data = result.results || { carbon_footprint: 0, circularity_score: 0 };
+  const [result, setResult] = useState(() => {
+    if (location.state?.result) return location.state.result;
+    const cached = localStorage.getItem('lastResult');
+    return cached ? JSON.parse(cached) : {};
+  });
+
+  const data = result.results || result || { carbon_footprint: 0, circularity_score: 0 };
+  const carbonValue = Number(
+    data.carbon_footprint ?? data.carbon ?? data.total_carbon ?? 0
+  );
+  const circularityValue = Number(
+    data.circularity_score ?? data.circularity ?? data.avg_circularity ?? 0
+  );
+  const recommendations = result.results?.recommendations || result.recommendations || [];
+
+  // If page was opened directly, try to hydrate from localStorage once
+  useEffect(() => {
+    if (!location.state?.result && !result.results) {
+      const cached = localStorage.getItem('lastResult');
+      if (cached) setResult(JSON.parse(cached));
+    }
+  }, [location.state, result.results]);
   const originalFormData = location.state?.formData || {}; // You might need to pass formData from CreateProject
 
   const chartData = {
@@ -16,7 +35,7 @@ const Dashboard = () => {
     datasets: [
       {
         label: 'Impact Analysis',
-        data: [data.carbon_footprint, data.circularity_score],
+        data: [carbonValue, circularityValue],
         backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(75, 192, 192, 0.6)'],
       },
     ],
@@ -92,7 +111,16 @@ const Dashboard = () => {
       </div>
 
       <div className="alert alert-info mt-4">
-        <strong>🤖 AI Recommendation:</strong> {data.recommendation}
+        <strong>🤖 AI Recommendations:</strong>
+        {Array.isArray(recommendations) && recommendations.length > 0 ? (
+          <ul className="mb-0 mt-2">
+            {recommendations.map((rec, idx) => (
+              <li key={idx}>{rec.recommendation || rec}</li>
+            ))}
+          </ul>
+        ) : (
+          <span className="ms-2">{data.recommendation || 'No recommendations available yet.'}</span>
+        )}
       </div>
     </div>
   );
