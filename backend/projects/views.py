@@ -10,7 +10,7 @@ import pandas as pd
 
 
 from ai_models.predict import analyze_dataset
-from ai_models.recommender import generate_recommendations
+from ai_models.recommender import get_ai_recommendation
 from reports.pdf_generator import generate_pdf_report
 from reports.excel_generator import generate_excel_report
 
@@ -37,12 +37,29 @@ def upload_lca_dataset(request):
         return Response({"error": f"Unable to read file: {exc}"}, status=status.HTTP_400_BAD_REQUEST)
 
     analysis_results = analyze_dataset(df)
-    recommendations = generate_recommendations(analysis_results)
+
+    # Build an AI recommender input from the uploaded dataset.
+    # Prefer the model feature names used by analyze_dataset normalization.
+    energy = float(pd.to_numeric(df.get("energy_consumption"), errors="coerce").fillna(0).mean()) if "energy_consumption" in df.columns else 0.0
+    water = float(pd.to_numeric(df.get("water_usage"), errors="coerce").fillna(0).mean()) if "water_usage" in df.columns else 0.0
+    waste = float(pd.to_numeric(df.get("waste_generated"), errors="coerce").fillna(0).mean()) if "waste_generated" in df.columns else 0.0
+    co2 = float(pd.to_numeric(df.get("co2_emission"), errors="coerce").fillna(0).mean()) if "co2_emission" in df.columns else 0.0
+    material = float(pd.to_numeric(df.get("raw_material_qty"), errors="coerce").fillna(0).mean()) if "raw_material_qty" in df.columns else 0.0
+
+    ai_recommendation = get_ai_recommendation({
+        "energy_consumption": energy,
+        "water_usage": water,
+        "raw_material_qty": material,
+        "waste_generated": waste,
+        "co2_emission": co2,
+        "sustainability_score": analysis_results.get("average_score"),
+    })
 
     return Response({
         "status": "success",
         "analysis": analysis_results,
-        "recommendations": recommendations
+        "ai_recommendation": ai_recommendation,
+        "recommendations": [ai_recommendation]
     })
 
 # Report Generators
@@ -69,7 +86,21 @@ class LCAAnalysisView(APIView):
 
                 # Run AI analysis on the dataset for recommendations
                 analysis_results = analyze_dataset(df)
-                recommendations = generate_recommendations(analysis_results)
+                # AI-based recommendation from aggregate dataset features
+                energy = float(pd.to_numeric(df.get("energy_consumption"), errors="coerce").fillna(0).mean()) if "energy_consumption" in df.columns else 0.0
+                water = float(pd.to_numeric(df.get("water_usage"), errors="coerce").fillna(0).mean()) if "water_usage" in df.columns else 0.0
+                waste = float(pd.to_numeric(df.get("waste_generated"), errors="coerce").fillna(0).mean()) if "waste_generated" in df.columns else 0.0
+                co2 = float(pd.to_numeric(df.get("co2_emission"), errors="coerce").fillna(0).mean()) if "co2_emission" in df.columns else 0.0
+                material = float(pd.to_numeric(df.get("raw_material_qty"), errors="coerce").fillna(0).mean()) if "raw_material_qty" in df.columns else 0.0
+
+                ai_recommendation = get_ai_recommendation({
+                    "energy_consumption": energy,
+                    "water_usage": water,
+                    "raw_material_qty": material,
+                    "waste_generated": waste,
+                    "co2_emission": co2,
+                    "sustainability_score": analysis_results.get("average_score"),
+                })
 
                 processed_results = []
                 
@@ -141,8 +172,8 @@ class LCAAnalysisView(APIView):
                 total_carbon = sum(item['carbon_footprint'] for item in processed_results)
                 avg_circularity = sum(item['circularity_score'] for item in processed_results) / len(processed_results)
 
-                # Include a simple aggregate recommendation for the dashboard
-                recommendation = "Batch Analysis Complete. Check Reports for detailed breakdown."
+                # Use AI recommendation text for the dashboard summary.
+                recommendation = ai_recommendation.get("recommendation") if isinstance(ai_recommendation, dict) else None
 
                 return Response({
                     "message": f"Successfully processed {len(df)} rows.",
@@ -150,9 +181,10 @@ class LCAAnalysisView(APIView):
                         "carbon_footprint": round(total_carbon, 2),
                         "circularity_score": round(avg_circularity, 2),
                         "recommendation": recommendation,
-                        "recommendations": recommendations,
+                        "recommendations": [ai_recommendation],
                         "analysis": analysis_results
                     },
+                    "ai_recommendation": ai_recommendation,
                     "rows_processed": len(df)
                 }, status=status.HTTP_201_CREATED)
 
@@ -165,13 +197,20 @@ class LCAAnalysisView(APIView):
 
         # Build a tiny dataframe to reuse AI recommender for single entry
         manual_df = pd.DataFrame([{
-            'energy': float(data.get('energy_consumption', 0)),
-            'water': float(data.get('water_usage', 0)),
-            'material': float(data.get('raw_material_qty', 0)),
-            'process_stage': data.get('process_stage', 'Unknown')
+            'energy_consumption': float(data.get('energy_consumption', 0)),
+            'water_usage': float(data.get('water_usage', 0)),
+            'waste_generated': float(data.get('waste_generated', 0) or 0),
+            'co2_emission': float(data.get('co2_emission', 0) or 0),
         }])
         analysis_results = analyze_dataset(manual_df)
-        recommendations = generate_recommendations(analysis_results)
+        ai_recommendation = get_ai_recommendation({
+            "energy_consumption": float(data.get('energy_consumption', 0) or 0),
+            "water_usage": float(data.get('water_usage', 0) or 0),
+            "raw_material_qty": float(data.get('raw_material_qty', 0) or 0),
+            "waste_generated": float(data.get('waste_generated', 0) or 0),
+            "co2_emission": float(data.get('co2_emission', 0) or 0),
+            "sustainability_score": analysis_results.get("average_score"),
+        })
 
         try:
             project = Project.objects.create(
@@ -193,7 +232,8 @@ class LCAAnalysisView(APIView):
             "results": results,
             "project_id": project_id,
             "analysis": analysis_results,
-            "recommendations": recommendations
+            "ai_recommendation": ai_recommendation,
+            "recommendations": [ai_recommendation]
         }, status=status.HTTP_201_CREATED)
 
 
@@ -207,7 +247,7 @@ class GenerateReportView(APIView):
 
         # Add AI recommendations before generating report
         try:
-            results['recommendations'] = generate_recommendations(
+            results['recommendations'] = get_ai_recommendation(
                 results.get('carbon_footprint', 0), 
                 float(data.get('energy_consumption', 0)), 
                 data.get('industry_type', 'Mining')
@@ -233,7 +273,7 @@ class GenerateExcelView(APIView):
 
         # 2. Add AI recommendations (Consistency with PDF)
         try:
-             results['recommendations'] = generate_recommendations(
+             results['recommendations'] = get_ai_recommendation(
                 results.get('carbon_footprint', 0),
                 float(data.get('energy_consumption', 0)),
                 data.get('industry_type', 'Mining')

@@ -42,9 +42,8 @@ const CreateProject = () => {
             const formDataObj = new FormData();
             formDataObj.append('file', file);
             
-            response = await axios.post(API_URL, formDataObj, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            // Let Axios/browser set the multipart boundary header.
+            response = await axios.post(API_URL, formDataObj);
 
         } else {
             // 📝 Prepare Manual JSON
@@ -63,7 +62,11 @@ const CreateProject = () => {
 
     } catch (error) {
         console.error("Error submitting project", error);
-        alert("Submission failed. Check your data or file format.");
+                const serverMessage =
+                    error?.response?.data?.error ||
+                    error?.response?.data?.detail ||
+                    error?.message;
+                alert(`Submission failed. ${serverMessage || 'Check your data or file format.'}`);
     } finally {
         setLoading(false);
     }
