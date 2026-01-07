@@ -26,33 +26,39 @@ const AdminPanel = () => {
     if (loading) return <Loader />;
 
     return (
-        <div className="container mt-5">
-            <h2>⚙️ System Administration</h2>
-            <p className="text-muted">Overview of all assessments run on the platform.</p>
-            
-            <div className="table-responsive">
-                <table className="table table-hover table-bordered">
-                    <thead className="table-dark">
-                        <tr>
-                            <th>Project Name</th>
-                            <th>Industry</th>
-                            <th>CO2 Score</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {projects.length > 0 ? projects.map((p, i) => (
-                            <tr key={i}>
-                                <td>{p.name}</td>
-                                <td>{p.industry_type}</td>
-                                <td>{p.carbon_footprint}</td>
-                                <td><span className="badge bg-success">Completed</span></td>
+        <div className="container">
+            <div className="page-header">
+                <div>
+                    <h2 className="page-title h4">Administration</h2>
+                    <p className="page-subtitle">Overview of assessments run on the platform.</p>
+                </div>
+            </div>
+
+            <div className="card p-3">
+                <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>Industry</th>
+                                <th>Carbon (kg CO₂e)</th>
+                                <th>Status</th>
                             </tr>
-                        )) : (
-                            <tr><td colSpan="4" className="text-center">No projects found.</td></tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {projects.length > 0 ? projects.map((p, i) => (
+                                <tr key={i}>
+                                    <td className="fw-semibold">{p.name}</td>
+                                    <td>{p.industry_type}</td>
+                                    <td className="metric-value">{p.carbon_footprint}</td>
+                                    <td><span className="badge bg-success">Completed</span></td>
+                                </tr>
+                            )) : (
+                                <tr><td colSpan="4" className="text-center text-muted py-4">No projects found.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

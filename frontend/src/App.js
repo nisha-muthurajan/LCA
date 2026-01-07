@@ -9,6 +9,7 @@ import CreateProject from './pages/CreateProject';
 import Dashboard from './pages/Dashboard';
 import Recommendations from './pages/Recommendations';
 import AdminPanel from './pages/AdminPanel';
+import Reports from './pages/Reports';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/main.css';
 
@@ -18,13 +19,13 @@ function App() {
       <Navbar />
       
       {/* Main Layout Container */}
-      <div className="d-flex">
+      <div className="app-shell">
         
-        {/* Sidebar (Fixed Width) */}
+        {/* Sidebar */}
         <Sidebar />
 
-        {/* Content Area (Flexible Width) */}
-        <div className="content-container flex-grow-1 p-4">
+        {/* Content Area */}
+        <main className="app-main" role="main">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -32,9 +33,10 @@ function App() {
             <Route path="/create-project" element={<CreateProject />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/recommendations" element={<Recommendations />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="/admin-panel" element={<AdminPanel />} />
           </Routes>
-        </div>
+        </main>
       </div>
     </Router>
   );

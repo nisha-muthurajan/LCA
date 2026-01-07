@@ -92,31 +92,40 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>📊 Sustainability Dashboard</h2>
+    <div className="container">
+      <div className="page-header">
         <div>
-            <button onClick={downloadPDF} className="btn btn-danger me-2">Download PDF 📄</button>
-            <button onClick={downloadExcel} className="btn btn-success">Download Excel 📊</button>
+          <h2 className="page-title h4">Dashboard</h2>
+          <p className="page-subtitle">Summary of the latest assessment results.</p>
+        </div>
+        <div className="d-flex gap-2 flex-wrap">
+            <button onClick={downloadPDF} className="btn btn-outline-danger">Download PDF</button>
+            <button onClick={downloadExcel} className="btn btn-success">Download Excel</button>
         </div>
       </div>
 
       <div className="row">
         <div className="col-md-6">
           <div className="card p-3">
-            <h4>Carbon Footprint</h4>
-            <h1 className="text-danger">{carbonValue} <span className="fs-6">kg CO2e</span></h1>
+            <div className="text-muted">Carbon footprint</div>
+            <div className="d-flex align-items-end gap-2">
+              <div className="h2 mb-0 text-danger metric-value">{carbonValue}</div>
+              <div className="text-muted">kg CO₂e</div>
+            </div>
           </div>
         </div>
         <div className="col-md-6">
           <div className="card p-3">
-            <h4>Circularity Score</h4>
-            <h1 className="text-success">{circularityValue} <span className="fs-6">/ 100</span></h1>
+            <div className="text-muted">Circularity score</div>
+            <div className="d-flex align-items-end gap-2">
+              <div className="h2 mb-0 text-success metric-value">{circularityValue}</div>
+              <div className="text-muted">/ 100</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-4" style={{ height: '300px' }}>
+      <div className="card p-3 mt-4" style={{ height: '360px' }}>
          <Bar 
            data={chartData} 
            options={{ 
@@ -143,7 +152,7 @@ const Dashboard = () => {
       </div>
 
       <div className="alert alert-info mt-4">
-        <strong>🤖 AI Recommendations:</strong>
+        <strong>AI recommendations</strong>
         {Array.isArray(recommendations) && recommendations.length > 0 ? (
           <ul className="mb-0 mt-2">
             {recommendations.map((rec, idx) => (

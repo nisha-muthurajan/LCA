@@ -1,38 +1,34 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 const Sidebar = () => {
     return (
-        <div className="d-flex flex-column flex-shrink-0 p-3 bg-light" style={{ width: '250px', height: '100vh', position: 'fixed', top: 56, left: 0 }}>
-            <ul className="nav nav-pills flex-column mb-auto">
-                <li className="nav-item">
-                    <Link to="/dashboard" className="nav-link link-dark">
-                        📊 Dashboard
-                    </Link>
-                </li>
-                <li>
-                    <Link to="/create-project" className="nav-link link-dark">
-                        ➕ New Assessment
-                    </Link>
-                </li>
-                <li>
-                    <Link to="/recommendations" className="nav-link link-dark">
-                        💡 AI Insights
-                    </Link>
-                </li>
-                <li>
-                    <Link to="/reports" className="nav-link link-dark">
-                        📑 Reports
-                    </Link>
-                </li>
-                <hr />
-                <li>
-                    <Link to="/admin-panel" className="nav-link link-dark">
-                        ⚙️ Admin
-                    </Link>
-                </li>
-            </ul>
-        </div>
+        <aside className="app-sidebar" aria-label="Primary">
+            <div className="px-3 pt-3 pb-2">
+                <div className="text-uppercase small text-muted fw-semibold">Workspace</div>
+            </div>
+
+            <nav className="px-2 pb-3">
+                <NavLink to="/dashboard" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                    Dashboard
+                </NavLink>
+                <NavLink to="/create-project" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                    New Assessment
+                </NavLink>
+                <NavLink to="/recommendations" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                    AI Insights
+                </NavLink>
+                <NavLink to="/reports" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                    Reports
+                </NavLink>
+
+                <div className="sidebar-divider" />
+                <div className="px-2 pt-2 text-uppercase small text-muted fw-semibold">Administration</div>
+                <NavLink to="/admin-panel" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                    Admin Panel
+                </NavLink>
+            </nav>
+        </aside>
     );
 };
 

@@ -7,6 +7,7 @@ const CreateProject = () => {
   const [mode, setMode] = useState('manual'); // 'manual' or 'upload'
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState({ type: null, message: '' });
   
   // Manual Data State
   const [formData, setFormData] = useState({
@@ -31,6 +32,7 @@ const CreateProject = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+        setStatus({ type: null, message: '' });
 
     const API_URL = 'http://localhost:8000/api/projects/analyze/';
     
@@ -66,30 +68,43 @@ const CreateProject = () => {
                     error?.response?.data?.error ||
                     error?.response?.data?.detail ||
                     error?.message;
-                alert(`Submission failed. ${serverMessage || 'Check your data or file format.'}`);
+                setStatus({ type: 'danger', message: `Submission failed. ${serverMessage || 'Check your data or file format.'}` });
     } finally {
         setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-5">
-      <div className="card shadow-sm p-4">
-        <h2 className="mb-4">🚀 New Sustainability Assessment</h2>
+        <div className="container">
+            <div className="card p-4 mt-3">
+                <div className="page-header">
+                    <div>
+                        <h2 className="page-title h4">New assessment</h2>
+                        <p className="page-subtitle">Enter project parameters or upload a dataset to analyze.</p>
+                    </div>
+                </div>
+
+                {status.type && (
+                    <div className={`alert alert-${status.type}`} role="alert">
+                        {status.message}
+                    </div>
+                )}
 
         {/* Toggle Buttons */}
-        <div className="btn-group w-100 mb-4">
+        <div className="btn-group w-100 mb-4" role="group" aria-label="Assessment mode">
             <button 
                 className={`btn ${mode === 'manual' ? 'btn-success' : 'btn-outline-secondary'}`}
                 onClick={() => setMode('manual')}
+                type="button"
             >
-                📝 Manual Entry
+                Manual entry
             </button>
             <button 
                 className={`btn ${mode === 'upload' ? 'btn-success' : 'btn-outline-secondary'}`}
                 onClick={() => setMode('upload')}
+                type="button"
             >
-                📂 Upload CSV / Excel
+                Upload CSV / Excel
             </button>
         </div>
 
@@ -101,6 +116,7 @@ const CreateProject = () => {
                 <div className="mb-3">
                     <label className="form-label">Project Name</label>
                     <input name="name" className="form-control" onChange={handleChange} required />
+                    <div className="form-text">Use a clear name for reports and archiving.</div>
                 </div>
                 <div className="row">
                     <div className="col-md-6 mb-3">
@@ -130,14 +146,18 @@ const CreateProject = () => {
 
           {/* --- FILE UPLOAD FORM --- */}
           {mode === 'upload' && (
-            <div className="text-center p-5 border rounded bg-light mb-3">
-                <div style={{ fontSize: '3rem' }}>📄</div>
-                <h4>Upload Dataset</h4>
-                <p className="text-muted">Supports .csv or .xlsx</p>
+                        <div className="p-4 border rounded-3 bg-light mb-3">
+                                <div className="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                    <div>
+                                        <h4 className="h5 mb-1">Upload dataset</h4>
+                                        <p className="text-muted mb-0">Supported formats: .csv or .xlsx</p>
+                                    </div>
+                                </div>
                 <input type="file" className="form-control" accept=".csv, .xlsx" onChange={handleFileChange} required />
-                <small className="d-block mt-3 text-start">
-                    <strong>Expected Columns:</strong> name, industry, energy, water, material
-                </small>
+                                <div className="mt-3">
+                                    <div className="fw-semibold">Expected columns</div>
+                                    <div className="text-muted small">name, industry, energy, water, material</div>
+                                </div>
             </div>
           )}
 
@@ -146,7 +166,7 @@ const CreateProject = () => {
             {loading ? (
                  <span><span className="spinner-border spinner-border-sm me-2"></span>Processing...</span>
             ) : (
-                mode === 'upload' ? 'Analyze File' : 'Calculate Impact'
+                                mode === 'upload' ? 'Analyze file' : 'Run assessment'
             )}
           </button>
 

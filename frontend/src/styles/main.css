@@ -1,67 +1,143 @@
+:root {
+    --app-navbar-height: 56px;
+    --app-sidebar-width: 260px;
+}
+
+html, body {
+    height: 100%;
+}
+
 body {
-    background-color: #f8f9fa;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bs-gray-100);
+    color: var(--bs-body-color);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
-.card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
+/* ---------------------------------
+   Layout: Navbar + Sidebar + Main
+---------------------------------- */
+.app-navbar {
+    height: var(--app-navbar-height);
 }
 
-.card:hover {
-    transform: translateY(-5px);
-}
-
-.navbar-brand {
-    font-weight: bold;
-    letter-spacing: 1px;
-}
-
-h1, h2, h3 {
-    color: #2c3e50;
-}
-
-.btn-primary {
-    background-color: #0d6efd;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-}
-
-/* ... existing styles ... */
-
-/* Layout for Sidebar + Content */
-.d-flex {
-    display: flex;
-    min-height: 100vh; /* Full screen height */
-}
-
-/* Sidebar Adjustment */
-/* We rely on the inline styles in Sidebar.jsx, but this ensures it sits below the navbar */
-.nav-pills .nav-link {
-    border-radius: 5px;
-    margin-bottom: 5px;
-}
-
-.nav-pills .nav-link:hover {
-    background-color: #e9ecef;
-}
-
-/* Main Content Area */
-.content-container {
-    margin-left: 250px; /* Pushes content right to make space for fixed Sidebar */
-    width: calc(100% - 250px); /* Prevents horizontal scrollbar */
-    margin-top: 56px; /* Pushes content down below the fixed Navbar (Bootstrap nav is ~56px) */
-    background-color: #f8f9fa;
+.app-shell {
     min-height: 100vh;
+    padding-top: var(--app-navbar-height);
 }
 
-/* Responsive Fix: Hide sidebar on small screens if needed */
-@media (max-width: 768px) {
-    .content-container {
+.app-sidebar {
+    position: fixed;
+    top: var(--app-navbar-height);
+    left: 0;
+    width: var(--app-sidebar-width);
+    height: calc(100vh - var(--app-navbar-height));
+    overflow-y: auto;
+    background: var(--bs-body-bg);
+    border-right: 1px solid var(--bs-border-color);
+}
+
+.app-main {
+    margin-left: var(--app-sidebar-width);
+    width: calc(100% - var(--app-sidebar-width));
+    padding: 24px;
+}
+
+@media (max-width: 992px) {
+    .app-sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    .app-main {
         margin-left: 0;
         width: 100%;
+        padding: 16px;
     }
+}
+
+/* ---------------------------------
+   Navigation (Sidebar)
+---------------------------------- */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin: 2px 6px;
+    border-radius: 10px;
+    color: var(--bs-body-color);
+    text-decoration: none;
+}
+
+.sidebar-link:hover {
+    background: var(--bs-gray-100);
+    color: var(--bs-body-color);
+}
+
+.sidebar-link.active {
+    background: rgba(var(--bs-success-rgb), 0.12);
+    color: var(--bs-success);
+    font-weight: 600;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: var(--bs-border-color);
+    margin: 12px 14px;
+}
+
+/* ---------------------------------
+   Base UI polish
+---------------------------------- */
+.card {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 14px;
+    box-shadow: var(--bs-box-shadow-sm);
+}
+
+h1, h2, h3, h4, h5 {
+    letter-spacing: -0.01em;
+}
+
+.btn {
+    border-radius: 10px;
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: rgba(var(--bs-success-rgb), 0.45);
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-success-rgb), 0.18);
+}
+
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.page-title {
+    margin: 0;
+    font-weight: 700;
+}
+
+.page-subtitle {
+    margin: 4px 0 0;
+    color: var(--bs-secondary-color);
+}
+
+.metric-value {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Make alerts feel less “blocky” */
+.alert {
+    border-radius: 12px;
 }

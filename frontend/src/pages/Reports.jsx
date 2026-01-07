@@ -49,39 +49,45 @@ const Reports = () => {
     if (loading) return <Loader />;
 
     return (
-        <div className="container mt-4">
-            <h2>📑 Project Reports Archive</h2>
-            <p className="text-muted">Access and download historical assessment reports.</p>
+        <div className="container">
+            <div className="page-header">
+                <div>
+                    <h2 className="page-title h4">Reports</h2>
+                    <p className="page-subtitle">Download historical assessment reports.</p>
+                </div>
+            </div>
 
-            <div className="list-group">
-                {projects.length > 0 ? (
-                    projects.map((project) => (
-                        <div key={project.id} className="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 className="mb-1">{project.name}</h5>
-                                <small className="text-muted">
-                                    {project.industry_type} | {new Date(project.created_at).toLocaleDateString()}
-                                </small>
+            <div className="card p-3">
+                <div className="list-group list-group-flush">
+                    {projects.length > 0 ? (
+                        projects.map((project) => (
+                            <div key={project.id} className="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div>
+                                    <div className="fw-semibold">{project.name}</div>
+                                    <div className="text-muted small">
+                                        {project.industry_type} • {new Date(project.created_at).toLocaleDateString()}
+                                    </div>
+                                </div>
+                                <div className="d-flex gap-2">
+                                    <button 
+                                        className="btn btn-outline-danger btn-sm"
+                                        onClick={() => handleDownload(project, 'pdf')}
+                                    >
+                                        PDF
+                                    </button>
+                                    <button 
+                                        className="btn btn-outline-success btn-sm"
+                                        onClick={() => handleDownload(project, 'excel')}
+                                    >
+                                        Excel
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <button 
-                                    className="btn btn-outline-danger btn-sm me-2"
-                                    onClick={() => handleDownload(project, 'pdf')}
-                                >
-                                    PDF 📄
-                                </button>
-                                <button 
-                                    className="btn btn-outline-success btn-sm"
-                                    onClick={() => handleDownload(project, 'excel')}
-                                >
-                                    Excel 📊
-                                </button>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="alert alert-warning">No reports found. Create a project first!</div>
-                )}
+                        ))
+                    ) : (
+                        <div className="alert alert-warning mb-0">No reports found. Create a project first.</div>
+                    )}
+                </div>
             </div>
         </div>
     );
