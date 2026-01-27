@@ -39,13 +39,15 @@ const Dashboard = () => {
       {
         label: 'Carbon Footprint (kg CO2e)',
         data: [safeCarbon, null],
-        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+        borderRadius: 8,
         yAxisID: 'y',
       },
       {
         label: 'Circularity Score (/100)',
         data: [null, safeCircularity],
-        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+        borderRadius: 8,
         yAxisID: 'y1',
       },
     ],
@@ -92,75 +94,116 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container">
+    <div className="fade-in">
       <div className="page-header">
         <div>
-          <h2 className="page-title h4">Dashboard</h2>
+          <h2 className="page-title">Dashboard</h2>
           <p className="page-subtitle">Summary of the latest assessment results.</p>
         </div>
         <div className="d-flex gap-2 flex-wrap">
-            <button onClick={downloadPDF} className="btn btn-outline-danger">Download PDF</button>
-            <button onClick={downloadExcel} className="btn btn-success">Download Excel</button>
+            <button onClick={downloadPDF} className="btn btn-outline-danger">
+              <span>📄</span> Download PDF
+            </button>
+            <button onClick={downloadExcel} className="btn btn-success">
+              <span>📊</span> Download Excel
+            </button>
         </div>
       </div>
 
-      <div className="row">
+      {/* Metric Cards */}
+      <div className="row g-4 mb-4">
         <div className="col-md-6">
-          <div className="card p-3">
-            <div className="text-muted">Carbon footprint</div>
-            <div className="d-flex align-items-end gap-2">
-              <div className="h2 mb-0 text-danger metric-value">{carbonValue}</div>
-              <div className="text-muted">kg CO₂e</div>
+          <div className="metric-card danger">
+            <div className="metric-label">🔥 Carbon Footprint</div>
+            <div className="d-flex align-items-baseline">
+              <span className="metric-value danger">{carbonValue.toLocaleString()}</span>
+              <span className="metric-unit">kg CO₂e</span>
             </div>
           </div>
         </div>
         <div className="col-md-6">
-          <div className="card p-3">
-            <div className="text-muted">Circularity score</div>
-            <div className="d-flex align-items-end gap-2">
-              <div className="h2 mb-0 text-success metric-value">{circularityValue}</div>
-              <div className="text-muted">/ 100</div>
+          <div className="metric-card success">
+            <div className="metric-label">♻️ Circularity Score</div>
+            <div className="d-flex align-items-baseline">
+              <span className="metric-value success">{circularityValue}</span>
+              <span className="metric-unit">/ 100</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="card p-3 mt-4" style={{ height: '360px' }}>
+      {/* Chart */}
+      <div className="card p-4 mb-4" style={{ height: '380px' }}>
+        <h5 style={{ fontWeight: '700', marginBottom: '20px', fontSize: '1rem' }}>📈 Performance Overview</h5>
          <Bar 
            data={chartData} 
            options={{ 
              maintainAspectRatio: false,
+             plugins: {
+               legend: { 
+                 position: 'bottom',
+                 labels: {
+                   usePointStyle: true,
+                   padding: 20,
+                   font: { weight: '600' }
+                 }
+               }
+             },
              scales: {
+               x: {
+                 grid: { display: false },
+                 ticks: { font: { weight: '600' } }
+               },
                y: {
                  beginAtZero: true,
-                 title: { display: true, text: 'kg CO2e' }
+                 title: { display: true, text: 'kg CO₂e', font: { weight: '600' } },
+                 grid: { color: 'rgba(0,0,0,0.05)' }
                },
                y1: {
                  beginAtZero: true,
                  position: 'right',
                  min: 0,
                  max: 100,
-                 title: { display: true, text: 'Circularity (/100)' },
+                 title: { display: true, text: 'Score (/100)', font: { weight: '600' } },
                  grid: { drawOnChartArea: false }
                }
-             },
-             plugins: {
-               legend: { position: 'bottom' }
              }
            }} 
          />
       </div>
 
-      <div className="alert alert-info mt-4">
-        <strong>AI recommendations</strong>
+      {/* AI Recommendations */}
+      <div className="card p-4">
+        <h5 style={{ fontWeight: '700', marginBottom: '16px', fontSize: '1rem' }}>🤖 AI Recommendations</h5>
         {Array.isArray(recommendations) && recommendations.length > 0 ? (
-          <ul className="mb-0 mt-2">
+          <div className="d-flex flex-column gap-2">
             {recommendations.map((rec, idx) => (
-              <li key={idx}>{rec.recommendation || rec}</li>
+              <div key={idx} className="d-flex align-items-start gap-3 p-3" 
+                   style={{ background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <span style={{ 
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+                  color: '#fff', 
+                  width: '28px', 
+                  height: '28px', 
+                  borderRadius: '50%', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  flexShrink: 0
+                }}>
+                  {idx + 1}
+                </span>
+                <span style={{ color: '#334155', fontWeight: '500' }}>{rec.recommendation || rec}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         ) : (
-          <span className="ms-2">{data.recommendation || 'No recommendations available yet.'}</span>
+          <div className="text-center py-4" style={{ color: '#64748b' }}>
+            <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>💡</span>
+            {data.recommendation || 'No recommendations available yet. Run an assessment to get AI insights.'}
+          </div>
         )}
       </div>
     </div>

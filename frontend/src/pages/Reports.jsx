@@ -49,23 +49,44 @@ const Reports = () => {
     if (loading) return <Loader />;
 
     return (
-        <div className="container">
+        <div className="fade-in">
             <div className="page-header">
                 <div>
-                    <h2 className="page-title h4">Reports</h2>
+                    <h2 className="page-title">Reports</h2>
                     <p className="page-subtitle">Download historical assessment reports.</p>
                 </div>
             </div>
 
-            <div className="card p-3">
-                <div className="list-group list-group-flush">
-                    {projects.length > 0 ? (
-                        projects.map((project) => (
-                            <div key={project.id} className="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                <div>
-                                    <div className="fw-semibold">{project.name}</div>
-                                    <div className="text-muted small">
-                                        {project.industry_type} • {new Date(project.created_at).toLocaleDateString()}
+            <div className="card">
+                {projects.length > 0 ? (
+                    <div className="list-group list-group-flush">
+                        {projects.map((project) => (
+                            <div key={project.id} className="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-3 p-4">
+                                <div className="d-flex align-items-center gap-3">
+                                    <div style={{ 
+                                        width: '48px', 
+                                        height: '48px', 
+                                        borderRadius: '12px', 
+                                        background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '20px'
+                                    }}>
+                                        📊
+                                    </div>
+                                    <div>
+                                        <div style={{ fontWeight: '700', fontSize: '15px', color: '#0f172a' }}>{project.name}</div>
+                                        <div style={{ color: '#64748b', fontSize: '13px' }}>
+                                            <span className="badge" style={{ background: '#e2e8f0', color: '#475569', marginRight: '8px', fontWeight: '500' }}>
+                                                {project.industry_type}
+                                            </span>
+                                            {new Date(project.created_at).toLocaleDateString('en-US', { 
+                                                year: 'numeric', 
+                                                month: 'short', 
+                                                day: 'numeric' 
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="d-flex gap-2">
@@ -73,21 +94,25 @@ const Reports = () => {
                                         className="btn btn-outline-danger btn-sm"
                                         onClick={() => handleDownload(project, 'pdf')}
                                     >
-                                        PDF
+                                        <span style={{ marginRight: '4px' }}>📄</span> PDF
                                     </button>
                                     <button 
                                         className="btn btn-outline-success btn-sm"
                                         onClick={() => handleDownload(project, 'excel')}
                                     >
-                                        Excel
+                                        <span style={{ marginRight: '4px' }}>📊</span> Excel
                                     </button>
                                 </div>
                             </div>
-                        ))
-                    ) : (
-                        <div className="alert alert-warning mb-0">No reports found. Create a project first.</div>
-                    )}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-5">
+                        <div style={{ fontSize: '64px', marginBottom: '16px' }}>📁</div>
+                        <h4 style={{ fontWeight: '700', marginBottom: '8px' }}>No Reports Yet</h4>
+                        <p style={{ color: '#64748b' }}>Create a project assessment to generate your first report.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
