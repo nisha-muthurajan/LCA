@@ -21,6 +21,10 @@ const Sidebar = () => {
                     <span className="icon">➕</span>
                     New Assessment
                 </NavLink>
+                <NavLink to="/compare" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                    <span className="icon">🔄</span>
+                    Compare Industries
+                </NavLink>
                 <NavLink to="/recommendations" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
                     <span className="icon">🤖</span>
                     AI Insights

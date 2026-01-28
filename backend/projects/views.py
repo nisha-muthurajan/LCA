@@ -335,3 +335,252 @@ class GenerateExcelView(APIView):
 
         # 5. Return Response
         return excel_file
+
+
+class CompareIndustriesView(APIView):
+    """Compare environmental impact between two industry datasets"""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        file1 = request.FILES.get('file1')
+        file2 = request.FILES.get('file2')
+        industry1_name = request.data.get('industry1_name', 'Industry 1')
+        industry2_name = request.data.get('industry2_name', 'Industry 2')
+
+        if not file1 or not file2:
+            return Response({"error": "Both files are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Read datasets
+            if file1.name.lower().endswith('.csv'):
+                df1 = pd.read_csv(file1)
+            else:
+                df1 = pd.read_excel(file1)
+
+            if file2.name.lower().endswith('.csv'):
+                df2 = pd.read_csv(file2)
+            else:
+                df2 = pd.read_excel(file2)
+
+            # Process each dataset
+            metrics1 = self._calculate_industry_metrics(df1)
+            metrics2 = self._calculate_industry_metrics(df2)
+
+            # Calculate differences (percentage)
+            differences = self._calculate_differences(metrics1, metrics2)
+
+            # Determine better performer for each metric
+            better_performer = self._determine_better_performer(metrics1, metrics2, industry1_name, industry2_name)
+
+            # Generate AI suggestions for improvements
+            suggestions = self._generate_suggestions(metrics1, metrics2, industry1_name, industry2_name, differences)
+
+            # Determine overall winner
+            overall_winner = self._determine_overall_winner(metrics1, metrics2, industry1_name, industry2_name)
+
+            return Response({
+                "industry1": {
+                    "name": industry1_name,
+                    "metrics": metrics1,
+                    "rows_processed": len(df1)
+                },
+                "industry2": {
+                    "name": industry2_name,
+                    "metrics": metrics2,
+                    "rows_processed": len(df2)
+                },
+                "differences": differences,
+                "better_performer": better_performer,
+                "suggestions": suggestions,
+                "overall_winner": overall_winner
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({"error": f"Failed to process datasets: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def _calculate_industry_metrics(self, df):
+        """Calculate aggregate metrics from a dataset"""
+        def safe_mean(col_names):
+            for col in col_names:
+                matching = [c for c in df.columns if col.lower() in c.lower()]
+                if matching:
+                    return float(pd.to_numeric(df[matching[0]], errors='coerce').fillna(0).mean())
+            return 0.0
+
+        def safe_sum(col_names):
+            for col in col_names:
+                matching = [c for c in df.columns if col.lower() in c.lower()]
+                if matching:
+                    return float(pd.to_numeric(df[matching[0]], errors='coerce').fillna(0).sum())
+            return 0.0
+
+        # Extract metrics
+        energy = safe_sum(['energy', 'energy_consumption', 'power', 'kwh'])
+        water = safe_sum(['water', 'water_usage', 'h2o'])
+        material = safe_sum(['material', 'raw_material', 'ore', 'mass', 'metal'])
+        waste = safe_sum(['waste', 'waste_generated'])
+        co2 = safe_sum(['co2', 'emission', 'carbon'])
+
+        # Calculate carbon footprint using LCA engine logic
+        total_carbon = 0
+        total_circularity = 0
+        count = 0
+
+        for _, row in df.iterrows():
+            row_dict = {str(k).strip().lower(): row[k] for k in row.keys()}
+            
+            def get_val(keys, default=0):
+                for key in keys:
+                    for col, val in row_dict.items():
+                        if key in col and pd.notna(val):
+                            try:
+                                return float(val)
+                            except:
+                                pass
+                return default
+
+            data = {
+                'energy_consumption': get_val(['energy', 'power', 'kwh']),
+                'water_usage': get_val(['water', 'h2o']),
+                'raw_material_qty': get_val(['material', 'ore', 'metal', 'mass']),
+            }
+            
+            try:
+                result = calculate_lca(data)
+                total_carbon += result.get('carbon_footprint', 0)
+                total_circularity += result.get('circularity_score', 0)
+                count += 1
+            except:
+                pass
+
+        avg_circularity = total_circularity / count if count > 0 else 0
+
+        return {
+            'carbon_footprint': round(total_carbon, 2),
+            'energy_consumption': round(energy, 2),
+            'water_usage': round(water, 2),
+            'raw_material_qty': round(material, 2),
+            'waste_generated': round(waste, 2),
+            'co2_emission': round(co2, 2),
+            'circularity_score': round(avg_circularity, 2)
+        }
+
+    def _calculate_differences(self, metrics1, metrics2):
+        """Calculate percentage differences between two sets of metrics"""
+        def pct_diff(v1, v2):
+            if v2 == 0:
+                return 100 if v1 > 0 else 0
+            return round(((v1 - v2) / v2) * 100, 2)
+
+        return {
+            'carbon_footprint_diff': pct_diff(metrics1['carbon_footprint'], metrics2['carbon_footprint']),
+            'energy_diff': pct_diff(metrics1['energy_consumption'], metrics2['energy_consumption']),
+            'water_diff': pct_diff(metrics1['water_usage'], metrics2['water_usage']),
+            'material_diff': pct_diff(metrics1['raw_material_qty'], metrics2['raw_material_qty']),
+            'circularity_diff': pct_diff(metrics1['circularity_score'], metrics2['circularity_score'])
+        }
+
+    def _determine_better_performer(self, metrics1, metrics2, name1, name2):
+        """Determine which industry performs better for each metric"""
+        return {
+            'carbon': name1 if metrics1['carbon_footprint'] < metrics2['carbon_footprint'] else name2,
+            'energy': name1 if metrics1['energy_consumption'] < metrics2['energy_consumption'] else name2,
+            'water': name1 if metrics1['water_usage'] < metrics2['water_usage'] else name2,
+            'material': name1 if metrics1['raw_material_qty'] < metrics2['raw_material_qty'] else name2,
+            'circularity': name1 if metrics1['circularity_score'] > metrics2['circularity_score'] else name2  # Higher is better
+        }
+
+    def _determine_overall_winner(self, metrics1, metrics2, name1, name2):
+        """Determine overall winner based on weighted scoring"""
+        score1 = 0
+        score2 = 0
+        
+        # Lower is better for these
+        if metrics1['carbon_footprint'] < metrics2['carbon_footprint']:
+            score1 += 3  # Carbon weighted higher
+        else:
+            score2 += 3
+            
+        if metrics1['energy_consumption'] < metrics2['energy_consumption']:
+            score1 += 2
+        else:
+            score2 += 2
+            
+        if metrics1['water_usage'] < metrics2['water_usage']:
+            score1 += 2
+        else:
+            score2 += 2
+            
+        # Higher is better for circularity
+        if metrics1['circularity_score'] > metrics2['circularity_score']:
+            score1 += 2
+        else:
+            score2 += 2
+            
+        return name1 if score1 > score2 else name2
+
+    def _generate_suggestions(self, metrics1, metrics2, name1, name2, differences):
+        """Generate AI-driven suggestions for environmental improvement"""
+        suggestions1 = []
+        suggestions2 = []
+        general = []
+
+        # Industry 1 suggestions
+        if metrics1['carbon_footprint'] > metrics2['carbon_footprint']:
+            suggestions1.append(f"Reduce carbon emissions by {abs(differences['carbon_footprint_diff']):.1f}% to match {name2}'s performance")
+            suggestions1.append("Consider transitioning to renewable energy sources like solar or wind")
+            suggestions1.append("Implement carbon capture technologies at major emission points")
+        else:
+            suggestions1.append("Maintain current carbon efficiency practices")
+            suggestions1.append("Document best practices for industry-wide sharing")
+
+        if metrics1['energy_consumption'] > metrics2['energy_consumption']:
+            suggestions1.append(f"Target {abs(differences['energy_diff']):.1f}% energy reduction through efficiency upgrades")
+            suggestions1.append("Invest in energy-efficient equipment and LED lighting systems")
+        else:
+            suggestions1.append("Continue optimizing energy usage patterns")
+
+        if metrics1['water_usage'] > metrics2['water_usage']:
+            suggestions1.append(f"Implement water recycling to reduce usage by {abs(differences['water_diff']):.1f}%")
+            suggestions1.append("Install closed-loop cooling systems to minimize water loss")
+        else:
+            suggestions1.append("Maintain water conservation measures")
+
+        # Industry 2 suggestions
+        if metrics2['carbon_footprint'] > metrics1['carbon_footprint']:
+            suggestions2.append(f"Reduce carbon emissions by {abs(differences['carbon_footprint_diff']):.1f}% to match {name1}'s performance")
+            suggestions2.append("Consider transitioning to renewable energy sources")
+            suggestions2.append("Implement carbon capture or offset programs")
+        else:
+            suggestions2.append("Maintain current carbon efficiency practices")
+            suggestions2.append("Share best practices with industry partners")
+
+        if metrics2['energy_consumption'] > metrics1['energy_consumption']:
+            suggestions2.append(f"Target {abs(differences['energy_diff']):.1f}% energy reduction")
+            suggestions2.append("Conduct energy audit to identify inefficiencies")
+        else:
+            suggestions2.append("Continue energy optimization efforts")
+
+        if metrics2['water_usage'] > metrics1['water_usage']:
+            suggestions2.append(f"Implement water conservation to reduce by {abs(differences['water_diff']):.1f}%")
+            suggestions2.append("Use recycled water for non-critical processes")
+        else:
+            suggestions2.append("Maintain water efficiency standards")
+
+        # General insights
+        general.append(f"Carbon footprint gap: {abs(differences['carbon_footprint_diff']):.1f}% - focus on reducing this for maximum environmental benefit")
+        general.append(f"Energy efficiency gap: {abs(differences['energy_diff']):.1f}% - renewable energy adoption can help close this")
+        general.append(f"Water usage gap: {abs(differences['water_diff']):.1f}% - water recycling systems are highly effective")
+        general.append("Consider circular economy practices to improve material efficiency")
+        general.append("Regular environmental audits help track improvement progress")
+        general.append("Cross-industry collaboration can accelerate sustainability improvements")
+
+        return {
+            'industry1': suggestions1[:5],
+            'industry2': suggestions2[:5],
+            'general': general
+        }

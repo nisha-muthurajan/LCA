@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import CreateProject from './pages/CreateProject';
 import Dashboard from './pages/Dashboard';
 import Recommendations from './pages/Recommendations';
+import CompareIndustries from './pages/CompareIndustries';
 import AdminPanel from './pages/AdminPanel';
 import Reports from './pages/Reports';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -33,6 +34,7 @@ function App() {
             <Route path="/create-project" element={<CreateProject />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/recommendations" element={<Recommendations />} />
+            <Route path="/compare" element={<CompareIndustries />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/admin-panel" element={<AdminPanel />} />
           </Routes>
