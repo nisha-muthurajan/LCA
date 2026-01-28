@@ -18,6 +18,8 @@ const Login = () => {
             await login(username, password);
             
             setStatus({ type: 'success', message: 'Signed in successfully.' });
+            // Notify navbar to update user state
+            window.dispatchEvent(new Event('userUpdated'));
             navigate('/dashboard');
         } catch (error) {
             console.error(error);

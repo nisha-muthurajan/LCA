@@ -11,6 +11,7 @@ import Recommendations from './pages/Recommendations';
 import CompareIndustries from './pages/CompareIndustries';
 import AdminPanel from './pages/AdminPanel';
 import Reports from './pages/Reports';
+import Profile from './pages/Profile';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/main.css';
 
@@ -37,6 +38,7 @@ function App() {
             <Route path="/compare" element={<CompareIndustries />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/admin-panel" element={<AdminPanel />} />
+            <Route path="/profile" element={<Profile />} />
           </Routes>
         </main>
       </div>
